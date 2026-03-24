@@ -158,186 +158,127 @@ async function sendViaGmail(to, subject, htmlBody) {
   }).then(r => r.json())
 }
 
-// ─── Email HTML builder (bulletproof table-based, MJML patterns) ───────────
+// ─── Email HTML builder ────────────────────────────────────────────────────
 function buildEmailHTML(ctx, draft, articles) {
-  const date     = TODAY.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-  const issueNum = Math.ceil((TODAY - new Date('2025-01-01')) / (14 * 86400000))
-  const F        = 'Arial, Helvetica, sans-serif'
-  const FH       = '"Arial Black", Impact, Arial, sans-serif'
-  const RED      = BRAND.red
-  const BLACK    = BRAND.black
-  const OFFWHITE = BRAND.offWhite
+  const date   = TODAY.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const F      = 'Georgia, "Times New Roman", Times, serif'
+  const FS     = 'Helvetica Neue, Helvetica, Arial, sans-serif'
+  const RED    = BRAND.red
+  const BLACK  = BRAND.black
+  const BG     = '#F7F4EF'
 
-  // Checkerboard via repeating-linear-gradient (CSS, wide support except old Outlook)
-  // For Outlook we use alternating solid color bars instead
-  const stripeBar = (c, h) => `<tr><td height="${h}" bgcolor="${c}" style="font-size:0;line-height:0;">&nbsp;</td></tr>`
+  const tagColor = label => {
+    const map = {
+      'New Models & Research': { bg: '#111', color: RED },
+      'Video, Image & Audio Gen': { bg: '#1a1a2e', color: '#7EB8F7' },
+      'Claude, Gemini & ChatGPT': { bg: '#0d2818', color: '#5DD98A' },
+      'Agentic AI & Skills': { bg: '#2a1800', color: '#F5A623' },
+      'Brands & Agencies Using AI': { bg: '#1c0a00', color: '#F5D5C8' },
+      'r/StableDiffusion': { bg: '#1a0a00', color: '#FF6314' },
+      'r/comfyui': { bg: '#0f1a00', color: '#8BC34A' },
+    }
+    return map[label] || { bg: BLACK, color: '#fff' }
+  }
 
-  const [topStory, ...rest] = articles
-  const bucketOrder = [...new Set(rest.map(a => a.bucket_label))]
-  const grouped = bucketOrder.map(bl => ({ label: bl, icon: BUCKET_ICONS[bl] || '📌', items: rest.filter(a => a.bucket_label === bl) }))
+  const articleCard = (a, isFirst) => {
+    const tag = tagColor(a.bucket_label)
+    const hasImg = !!a.og_image
+    const imgBlock = hasImg
+      ? `<tr><td style="padding:0;line-height:0;font-size:0;">
+           <a href="${a.url}" style="display:block;line-height:0;"><img src="${a.og_image}" width="560" alt="" style="display:block;width:100%;max-width:560px;height:auto;border-radius:10px 10px 0 0;background:#ddd;" /></a>
+         </td></tr>`
+      : `<tr><td bgcolor="${BLACK}" style="height:${isFirst ? 220 : 160}px;border-radius:10px 10px 0 0;text-align:center;vertical-align:middle;padding:24px;">
+           <p style="margin:0;font-family:${FS};font-size:11px;font-weight:700;color:${RED};text-transform:uppercase;letter-spacing:3px;line-height:1.4;">${a.source || a.bucket_label}</p>
+         </td></tr>`
 
-  // Top story hero
-  const heroSection = topStory ? `
-  <tr><td bgcolor="#ffffff" style="padding:0;">
-    ${topStory.og_image
-      ? `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="background:#111 url('${topStory.og_image}') center/cover no-repeat;height:220px;font-size:0;line-height:0;">&nbsp;
-          <!--[if gte mso 9]><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:600px;height:220px;"><v:fill type="tile" src="${topStory.og_image}" color="#111111"/><v:textbox inset="0,0,0,0"><![endif]-->
-          <!--[if gte mso 9]></v:textbox></v:rect><![endif]-->
-        </td></tr></table>`
-      : `<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${BLACK}" style="padding:28px 40px;">
-          <p style="margin:0 0 8px;font-family:${F};font-size:10px;font-weight:700;color:${RED};text-transform:uppercase;letter-spacing:2px;">${topStory.bucket_label || 'Top Story'}</p>
-          <p style="margin:0;font-family:${FH};font-size:20px;color:#ffffff;line-height:1.4;">${topStory.title}</p>
-        </td></tr></table>`}
-  </td></tr>
-  <tr><td bgcolor="#ffffff" style="padding:24px 40px 0;">
-    <p style="margin:0 0 6px;font-family:${F};font-size:10px;font-weight:700;color:#999999;text-transform:uppercase;letter-spacing:2px;">Top Story</p>
-    <h1 style="margin:0 0 12px;font-family:${FH};font-size:22px;font-weight:800;color:${BLACK};line-height:1.3;">
-      <a href="${topStory.url}" style="color:${BLACK};text-decoration:none;">${topStory.title}</a>
-    </h1>
-    <p style="margin:0 0 14px;font-family:${F};font-size:15px;color:#444444;line-height:1.7;">${topStory.summary}</p>
-    <table cellpadding="0" cellspacing="0" border="0"><tr>
-      <td bgcolor="#F0EDFF" style="border-radius:100px;padding:5px 14px;">
-        <a href="${topStory.url}" style="font-family:${F};font-size:12px;font-weight:600;color:#6B5CE7;text-decoration:none;">${topStory.source}</a>
-      </td>
-      ${topStory.published_date ? `<td style="padding-left:12px;font-family:${F};font-size:12px;color:#bbbbbb;">${new Date(topStory.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>` : ''}
-    </tr></table>
-  </td></tr>
-  <tr><td bgcolor="#ffffff" style="padding:20px 40px 0;"><table width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #f0ede8;font-size:0;line-height:0;">&nbsp;</td></tr></table></td></tr>` : ''
+    const topPad = isFirst ? '20px 20px 0' : '16px 20px 0'
 
-  // Article sections grouped by bucket
-  const articleSections = grouped.map(g => `
-  <tr><td bgcolor="#ffffff" style="padding:20px 40px 0;">
-    <p style="margin:0 0 14px;font-family:${F};font-size:14px;font-weight:700;color:#333333;">${g.icon} ${g.label}</p>
-    ${g.items.map(a => `
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid #f5f0e8;">
-      <tr>
-        <td width="106" valign="top" style="padding-right:14px;">
-          ${a.og_image
-            ? `<a href="${a.url}"><img src="${a.og_image}" width="92" alt="${(a.title || '').replace(/"/g, '')}" style="display:block;width:92px;height:62px;object-fit:cover;border-radius:4px;background:#eee;" /></a>`
-            : `<table width="92" cellpadding="0" cellspacing="0" border="0"><tr><td bgcolor="${BLACK}" style="width:92px;height:62px;border-radius:4px;text-align:center;vertical-align:middle;padding:8px;"><p style="margin:0;font-family:${F};font-size:9px;font-weight:700;color:${RED};text-transform:uppercase;letter-spacing:1px;line-height:1.3;">${(a.source || '').slice(0, 14)}</p></td></tr></table>`}
-        </td>
-        <td valign="top">
-          <h3 style="margin:0 0 5px;font-family:${F};font-size:15px;font-weight:700;line-height:1.4;color:${BLACK};">
-            <a href="${a.url}" style="color:${BLACK};text-decoration:none;">${a.title}</a>
-          </h3>
-          <p style="margin:0 0 8px;font-family:${F};font-size:13px;color:#666666;line-height:1.6;">${a.summary}</p>
+    return `
+    <tr><td style="padding:${isFirst ? '0' : '0 0 28px'};">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #E8E3DC;">
+        ${imgBlock}
+        <tr><td style="padding:${topPad};">
           <table cellpadding="0" cellspacing="0" border="0"><tr>
-            <td bgcolor="#F0EDFF" style="border-radius:100px;padding:3px 10px;">
-              <a href="${a.url}" style="font-family:${F};font-size:11px;font-weight:600;color:#6B5CE7;text-decoration:none;">${a.source}</a>
+            <td bgcolor="${tag.bg}" style="border-radius:4px;padding:4px 10px;">
+              <span style="font-family:${FS};font-size:10px;font-weight:700;color:${tag.color};text-transform:uppercase;letter-spacing:1.5px;">${a.bucket_label}</span>
             </td>
-            ${a.published_date ? `<td style="padding-left:10px;font-family:${F};font-size:11px;color:#bbbbbb;">${new Date(a.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td>` : ''}
-            ${a.reddit_score ? `<td style="padding-left:10px;font-family:${F};font-size:11px;color:#C44E00;">↑${Number(a.reddit_score).toLocaleString()}</td>` : ''}
           </tr></table>
-        </td>
-      </tr>
-    </table>`).join('')}
-  </td></tr>`).join('')
+        </td></tr>
+        <tr><td style="padding:12px 20px 8px;">
+          <h2 style="margin:0;font-family:${F};font-size:${isFirst ? 22 : 18}px;font-weight:700;color:${BLACK};line-height:1.35;letter-spacing:-0.3px;">
+            <a href="${a.url}" style="color:${BLACK};text-decoration:none;">${a.title}</a>
+          </h2>
+        </td></tr>
+        <tr><td style="padding:0 20px 16px;">
+          <p style="margin:0;font-family:${FS};font-size:14px;color:#555;line-height:1.7;">${a.summary}</p>
+        </td></tr>
+        <tr><td style="padding:0 20px 20px;border-top:1px solid #F0EBE3;">
+          <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+            <td valign="middle" style="padding-top:14px;">
+              <span style="font-family:${FS};font-size:12px;color:#999;">${a.source || ''}${a.published_date ? ` · ${new Date(a.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}</span>
+            </td>
+            <td valign="middle" align="right" style="padding-top:14px;">
+              <a href="${a.url}" style="font-family:${FS};font-size:13px;font-weight:600;color:${RED};text-decoration:none;letter-spacing:-0.2px;">Read → </a>
+            </td>
+          </tr></table>
+        </td></tr>
+      </table>
+    </td></tr>`
+  }
 
-  // Playbook rows
-  const playbookRows = draft.playbook.map((s, i) => `
-    <tr><td style="padding:8px 0;border-bottom:1px solid ${BRAND.blush};font-family:${F};font-size:14px;color:#333333;line-height:1.6;">
-      <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="26" height="26" bgcolor="${RED}" style="border-radius:13px;text-align:center;vertical-align:middle;font-family:${F};font-size:12px;font-weight:700;color:#ffffff;padding-bottom:1px;">${i + 1}</td>
-        <td style="padding-left:12px;">${s}</td>
-      </tr></table>
-    </td></tr>`).join('')
+  const articleRows = articles.map((a, i) => articleCard(a, i === 0)).join('')
 
   return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="color-scheme" content="light"/>
 <title>The Sauce — ${date}</title>
-<!--[if mso]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]-->
 <style type="text/css">
   body,table,td,a{-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}
   table,td{mso-table-lspace:0pt;mso-table-rspace:0pt}
   img{-ms-interpolation-mode:bicubic;border:0;outline:none;text-decoration:none}
-  body{margin:0;padding:0;background-color:${OFFWHITE}}
-  @media only screen and (max-width:620px){
-    .mobile-full{width:100%!important}
-    .mobile-pad{padding-left:20px!important;padding-right:20px!important}
-    .mobile-thumb{display:none!important}
-    .mobile-full-text{width:100%!important;padding-left:0!important}
+  body{margin:0;padding:0;background-color:${BG}}
+  a{color:inherit}
+  @media only screen and (max-width:600px){
+    .wrapper{width:100%!important;padding:16px!important}
+    .inner{padding:0 4px!important}
   }
 </style>
 </head>
-<body style="margin:0;padding:0;background-color:${OFFWHITE};">
-<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${OFFWHITE}">
-<tr><td align="center" style="padding:32px 16px;">
+<body style="margin:0;padding:0;background-color:${BG};">
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${BG}">
+<tr><td align="center" style="padding:40px 20px 48px;" class="wrapper">
+  <table width="560" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;" class="inner">
 
-  <table class="mobile-full" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border:2px solid ${BLACK};border-radius:6px;overflow:hidden;">
-
-    <!-- Stripe top -->
-    ${stripeBar(RED, 5)}${stripeBar(BLACK, 5)}${stripeBar(RED, 3)}
-
-    <!-- Header -->
-    <tr><td bgcolor="${BLACK}" style="padding:24px 40px 20px;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td valign="middle">
-          <p style="margin:0 0 4px;font-family:${FH};font-size:26px;font-weight:900;color:${RED};text-transform:uppercase;letter-spacing:-0.5px;line-height:1;">THE SAUCE</p>
-          <p style="margin:0;font-family:${F};font-size:10px;color:#666666;text-transform:uppercase;letter-spacing:2px;">by SECRETSAUCE · AI · Creative · Production</p>
-        </td>
-        <td valign="middle" align="right">
-          <p style="margin:0 0 3px;font-family:${F};font-size:11px;color:#555555;">${date}</p>
-          <p style="margin:0;font-family:${F};font-size:10px;color:#444444;">Issue #${issueNum}</p>
+    <!-- Logo / Header -->
+    <tr><td style="padding-bottom:28px;text-align:center;">
+      <p style="margin:0 0 16px;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:3px;">${date}</p>
+      <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+        <td bgcolor="${RED}" style="border-radius:6px;padding:6px 18px;">
+          <span style="font-family:Helvetica Neue,Helvetica,Arial,sans-serif;font-size:17px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:2px;">SECRETSAUCE</span>
         </td>
       </tr></table>
+      <p style="margin:20px 0 0;font-family:${F};font-size:22px;color:${BLACK};line-height:1.4;font-style:italic;">Hi James, here is your<br/>daily AI chef notes</p>
     </td></tr>
 
-    <!-- Red bar -->
-    ${stripeBar(RED, 5)}
-
-    <!-- Hook -->
-    <tr><td bgcolor="#ffffff" style="padding:28px 40px 0;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td style="border-left:4px solid ${RED};padding-left:16px;">
-          <p style="margin:0;font-family:${F};font-size:15px;color:#333333;line-height:1.8;font-style:italic;">${draft.hook}</p>
-        </td>
-      </tr></table>
+    <!-- Divider -->
+    <tr><td style="padding-bottom:24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-top:2px solid ${BLACK};font-size:0;line-height:0;">&nbsp;</td></tr></table>
     </td></tr>
 
-    ${heroSection}
-    ${articleSections}
-
-    <!-- Core insight -->
-    <tr><td bgcolor="#ffffff" style="padding:24px 40px 0;">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-        <td bgcolor="${OFFWHITE}" style="border-left:4px solid ${RED};padding:16px 20px;border-radius:0 4px 4px 0;">
-          <p style="margin:0 0 8px;font-family:${F};font-size:10px;font-weight:700;color:${RED};text-transform:uppercase;letter-spacing:2px;">This week's take</p>
-          <p style="margin:0;font-family:${F};font-size:14px;color:#333333;line-height:1.8;">${draft.core_insight}</p>
-        </td>
-      </tr></table>
-    </td></tr>
-
-    <!-- Playbook -->
-    <tr><td bgcolor="#ffffff" style="padding:24px 40px 0;">
-      <p style="margin:0 0 12px;font-family:${F};font-size:10px;font-weight:700;color:${RED};text-transform:uppercase;letter-spacing:2px;">⚡ Your playbook</p>
-      <table width="100%" cellpadding="0" cellspacing="0" border="0">${playbookRows}</table>
-    </td></tr>
-
-    <!-- CTA — bulletproof button -->
-    <tr><td bgcolor="#ffffff" style="padding:28px 40px 32px;">
-      <table cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td bgcolor="${RED}" style="border-radius:100px;mso-padding-alt:14px 36px;">
-            <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="#" style="height:50px;v-text-anchor:middle;width:220px;" arcsize="50%" strokecolor="${RED}" fillcolor="${RED}"><w:anchorlock/><center style="color:#ffffff;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:2px;">${draft.cta}</center></v:roundrect><![endif]-->
-            <!--[if !mso]><!-->
-            <a href="#" style="display:inline-block;padding:14px 36px;font-family:${FH};font-size:13px;font-weight:700;color:#ffffff;text-decoration:none;text-transform:uppercase;letter-spacing:2px;border-radius:100px;mso-hide:all;">${draft.cta}</a>
-            <!--<![endif]-->
-          </td>
-        </tr>
+    <!-- Articles -->
+    <tr><td>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        ${articleRows}
       </table>
     </td></tr>
 
-    <!-- Footer stripes -->
-    ${stripeBar(RED, 5)}${stripeBar(BLACK, 4)}${stripeBar(RED, 3)}
-
     <!-- Footer -->
-    <tr><td bgcolor="${BLACK}" style="padding:18px 40px;text-align:center;">
-      <p style="margin:0 0 4px;font-family:${F};font-size:11px;color:#555555;">Bi-weekly · ${SEND_TIMES[ctx.geo]}</p>
-      <p style="margin:0;font-family:${F};font-size:11px;color:#333333;font-style:italic;">get saucy with us</p>
+    <tr><td style="padding-top:32px;text-align:center;border-top:1px solid #D9D4CC;">
+      <p style="margin:0 0 6px;font-family:${FS};font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:2px;">The Sauce by SECRETSAUCE</p>
+      <p style="margin:0;font-family:${F};font-size:12px;color:#bbb;font-style:italic;">get saucy with us · ${SEND_TIMES[ctx.geo]}</p>
     </td></tr>
 
   </table>
