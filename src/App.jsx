@@ -263,8 +263,43 @@ function buildEmailHTML(ctx, draft, articles) {
 
     <!-- Footer -->
     <tr><td style="padding-top:32px;text-align:center;border-top:1px solid #E5E5E5;">
-      <p style="margin:0 0 6px;font-family:${FS};font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:2px;">The Sauce by SECRETSAUCE</p>
-      <p style="margin:0;font-family:${F};font-size:12px;color:#bbb;font-style:italic;">get saucy with us · ${SEND_TIMES[ctx.geo]}</p>
+
+      <!-- Logo -->
+      <img src="${LOGO}" width="140" alt="SECRETSAUCE" style="display:inline-block;width:140px;height:auto;border:0;margin-bottom:16px;" />
+
+      <!-- Tagline -->
+      <p style="margin:0 0 16px;font-family:${F};font-size:13px;color:#888;font-style:italic;line-height:1.6;">AI · Creative · Production · Bi-weekly</p>
+
+      <!-- Social / links -->
+      <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin-bottom:16px;"><tr>
+        <td style="padding:0 10px;font-family:${FS};font-size:12px;">
+          <a href="https://www.getsaucywithus.com" style="color:#555;text-decoration:none;">Website</a>
+        </td>
+        <td style="color:#ddd;font-family:${FS};font-size:12px;">|</td>
+        <td style="padding:0 10px;font-family:${FS};font-size:12px;">
+          <a href="https://www.instagram.com/secretsaucecreative" style="color:#555;text-decoration:none;">Instagram</a>
+        </td>
+        <td style="color:#ddd;font-family:${FS};font-size:12px;">|</td>
+        <td style="padding:0 10px;font-family:${FS};font-size:12px;">
+          <a href="https://www.linkedin.com/company/secretsaucecreative" style="color:#555;text-decoration:none;">LinkedIn</a>
+        </td>
+      </tr></table>
+
+      <!-- Legal -->
+      <p style="margin:0 0 6px;font-family:${FS};font-size:11px;color:#bbb;line-height:1.6;">
+        SECRETSAUCE · hello@getsaucywithus.com
+      </p>
+      <p style="margin:0 0 16px;font-family:${FS};font-size:11px;color:#bbb;line-height:1.6;">
+        &copy; ${TODAY.getFullYear()} SECRETSAUCE. All rights reserved.
+      </p>
+
+      <!-- Unsubscribe -->
+      <p style="margin:0;font-family:${FS};font-size:11px;color:#ccc;">
+        <a href="#" style="color:#bbb;text-decoration:underline;">Manage preferences</a>
+        &nbsp;&middot;&nbsp;
+        <a href="#" style="color:#bbb;text-decoration:underline;">Unsubscribe</a>
+      </p>
+
     </td></tr>
 
   </table>
