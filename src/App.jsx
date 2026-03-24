@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 
 // ─── Config ───────────────────────────────────────────────────────────────
 const ANTHROPIC_API = 'https://api.anthropic.com/v1/messages'
+let ANTHROPIC_KEY = localStorage.getItem('sauce_api_key') || ''
 const GMAIL_MCP     = 'https://gmail.mcp.claude.com/mcp'
 const MODEL         = 'claude-sonnet-4-20250514'
 
@@ -75,7 +76,7 @@ function recencyBadge(d) {
 function callClaude(messages, system, useSearch = true) {
   const body = { model: MODEL, max_tokens: 1000, system: system || '', messages }
   if (useSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }]
-  return fetch(ANTHROPIC_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => r.json())
+  return fetch(ANTHROPIC_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify(body) }).then(r => r.json())
 }
 function extractText(content) {
   return (content || []).filter(b => b.type === 'text').map(b => b.text).join('\n')
@@ -409,6 +410,7 @@ function Sel({ value, onChange, options }) {
 
 // ─── App ──────────────────────────────────────────────────────────────────
 export default function App() {
+  const [apiKey,     setApiKey]     = useState(() => localStorage.getItem('sauce_api_key') || '')
   const [step,       setStep]       = useState(STEP.CONTEXT)
   const [ctx,        setCtx]        = useState(DEFAULT_CTX)
   const [buckets,    setBuckets]    = useState(TOPIC_BUCKETS)
@@ -574,9 +576,15 @@ export default function App() {
             ))}
           </div>
 
+          <Label>Anthropic API key</Label>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <input type="password" value={apiKey} onChange={e => { setApiKey(e.target.value); ANTHROPIC_KEY = e.target.value; localStorage.setItem('sauce_api_key', e.target.value) }} placeholder="sk-ant-..." style={inputStyle} />
+            {!apiKey && <p style={{ margin: '5px 0 0', fontSize: 11, color: BRAND.red }}>Required — get yours at console.anthropic.com</p>}
+          </div>
+
           {step === STEP.SCRAPING
             ? <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><span style={{ fontSize: 13, color: '#666' }}>Fetching {scraping}...</span></div>
-            : <button onClick={scrape} style={redBtn}>Fetch articles ({buckets.filter(b => b.enabled).length} sources) →</button>}
+            : <button onClick={scrape} disabled={!apiKey} style={{ ...redBtn, opacity: apiKey ? 1 : 0.4, cursor: apiKey ? 'pointer' : 'not-allowed' }}>Fetch articles ({buckets.filter(b => b.enabled).length} sources) →</button>}
         </div>
       )}
 
