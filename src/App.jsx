@@ -165,7 +165,8 @@ function buildEmailHTML(ctx, draft, articles) {
   const FS     = 'Helvetica Neue, Helvetica, Arial, sans-serif'
   const RED    = BRAND.red
   const BLACK  = BRAND.black
-  const BG     = '#F7F4EF'
+  const BG     = '#EBEBEB'
+  const LOGO   = 'https://the-sauce-newsletter.netlify.app/logo.png'
 
   const tagColor = label => {
     const map = {
@@ -255,11 +256,7 @@ function buildEmailHTML(ctx, draft, articles) {
     <!-- Logo / Header -->
     <tr><td style="padding-bottom:28px;text-align:center;">
       <p style="margin:0 0 16px;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:3px;">${date}</p>
-      <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
-        <td bgcolor="${RED}" style="border-radius:6px;padding:6px 18px;">
-          <span style="font-family:Helvetica Neue,Helvetica,Arial,sans-serif;font-size:17px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:2px;">SECRETSAUCE</span>
-        </td>
-      </tr></table>
+      <img src="${LOGO}" width="220" alt="SECRETSAUCE" style="display:inline-block;width:220px;height:auto;border:0;outline:none;" />
       <p style="margin:20px 0 0;font-family:${F};font-size:22px;color:${BLACK};line-height:1.4;font-style:italic;">Hi James, here is your<br/>daily AI chef notes</p>
     </td></tr>
 
