@@ -247,7 +247,7 @@ function buildEmailHTML(ctx, draft, articles) {
     <tr><td style="padding-bottom:28px;text-align:center;">
       <p style="margin:0 0 16px;font-family:Helvetica Neue,Helvetica,Arial,sans-serif;font-size:10px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:3px;">${date}</p>
       <img src="${LOGO}" width="220" alt="SECRETSAUCE" style="display:inline-block;width:220px;height:auto;border:0;outline:none;" />
-      <p style="margin:20px 0 0;font-family:${F};font-size:22px;color:${BLACK};line-height:1.4;font-style:italic;">Hi James, here is your<br/>daily AI chef notes</p>
+      <p style="margin:20px 0 0;font-family:${F};font-size:44px;color:${BLACK};line-height:1.2;font-style:italic;">Hi James, here is your<br/>daily AI chef notes</p>
     </td></tr>
 
     <!-- Divider -->
