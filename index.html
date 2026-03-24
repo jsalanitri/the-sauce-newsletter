@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Sauce — Newsletter Studio</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      :root {
+        --red: #E8291C; --black: #111; --off-white: #f5f0e8;
+        --text: #111; --muted: #666; --faint: #999;
+        --border: rgba(0,0,0,0.12); --surface: #fff; --bg: #f5f0e8;
+        --radius: 8px; --radius-lg: 12px; --radius-pill: 100px;
+        --font: 'Inter', system-ui, sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --text: #f0ede8; --muted: #aaa; --faint: #666;
+          --border: rgba(255,255,255,0.12); --surface: #1a1a1a; --bg: #111;
+        }
+      }
+      body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+      #root { min-height: 100vh; }
+
+      /* Base form elements */
+      input, select, textarea {
+        font-family: var(--font); font-size: 13px; color: var(--text);
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 8px 12px; width: 100%;
+        outline: none; transition: border-color 0.15s;
+      }
+      input:focus, select:focus, textarea:focus { border-color: var(--red); }
+      button {
+        font-family: var(--font); font-size: 13px; cursor: pointer;
+        border: 1px solid var(--border); border-radius: var(--radius);
+        background: var(--surface); color: var(--text);
+        padding: 7px 14px; transition: background 0.15s, opacity 0.15s;
+      }
+      button:hover { background: var(--bg); }
+      @keyframes pulse { 0%,100%{opacity:.2} 50%{opacity:1} }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
