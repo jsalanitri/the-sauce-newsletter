@@ -85,7 +85,7 @@ function extractText(content) {
 // ─── Scrapers ─────────────────────────────────────────────────────────────
 async function scrapeWeb(bucket) {
   const q = bucket.queries[Math.floor(Math.random() * bucket.queries.length)]
-  const data = await callClaude([{ role: 'user', content: `Today is ${TODAY_STR}. Search for 3 recently published articles about: "${q}". Prioritize last 7 days. Return ONLY raw JSON array:\n[{"title":"...","url":"...","source":"...","summary":"2-3 sentences why this matters","published_date":"YYYY-MM-DD or empty","bucket":"${bucket.id}","bucket_label":"${bucket.label}","relevance_score":8}]\nExactly 3 items newest first. No markdown.` }], `Research analyst. Today is ${TODAY_STR}. Return only raw valid JSON arrays.`)
+  const data = await callClaude([{ role: 'user', content: `Today is ${TODAY_STR}. Search for 3 recently published articles about: "${q}". Prioritize last 7 days. Return ONLY raw JSON array:\n[{"title":"...","url":"...","source":"...","summary":"2-3 sentences why this matters","published_date":"YYYY-MM-DD or empty","og_image":"full https URL to article thumbnail/og image or empty string","bucket":"${bucket.id}","bucket_label":"${bucket.label}","relevance_score":8}]\nExactly 3 items newest first. No markdown.` }], `Research analyst. Today is ${TODAY_STR}. Return only raw valid JSON arrays.`)
   const text = extractText(data.content)
   const match = text.match(/\[[\s\S]*?\]/)
   if (!match) return []
@@ -168,18 +168,7 @@ function buildEmailHTML(ctx, draft, articles) {
   const BG     = '#EBEBEB'
   const LOGO   = 'https://the-sauce-newsletter.netlify.app/logo.png'
 
-  const tagColor = label => {
-    const map = {
-      'New Models & Research': { bg: '#111', color: RED },
-      'Video, Image & Audio Gen': { bg: '#1a1a2e', color: '#7EB8F7' },
-      'Claude, Gemini & ChatGPT': { bg: '#0d2818', color: '#5DD98A' },
-      'Agentic AI & Skills': { bg: '#2a1800', color: '#F5A623' },
-      'Brands & Agencies Using AI': { bg: '#1c0a00', color: '#F5D5C8' },
-      'r/StableDiffusion': { bg: '#1a0a00', color: '#FF6314' },
-      'r/comfyui': { bg: '#0f1a00', color: '#8BC34A' },
-    }
-    return map[label] || { bg: BLACK, color: '#fff' }
-  }
+  const tagColor = () => ({ bg: '#E8E8E8', color: '#111111' })
 
   const articleCard = (a, isFirst) => {
     const tag = tagColor(a.bucket_label)
@@ -196,12 +185,12 @@ function buildEmailHTML(ctx, draft, articles) {
 
     return `
     <tr><td style="padding:${isFirst ? '0' : '0 0 28px'};">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #E8E3DC;">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #EBEBEB;">
         ${imgBlock}
         <tr><td style="padding:${topPad};">
           <table cellpadding="0" cellspacing="0" border="0"><tr>
-            <td bgcolor="${tag.bg}" style="border-radius:4px;padding:4px 10px;">
-              <span style="font-family:${FS};font-size:10px;font-weight:700;color:${tag.color};text-transform:uppercase;letter-spacing:1.5px;">${a.bucket_label}</span>
+            <td bgcolor="${tag.bg}" style="border-radius:100px;padding:4px 12px;">
+              <span style="font-family:${FS};font-size:10px;font-weight:600;color:${tag.color};text-transform:uppercase;letter-spacing:1px;">${a.bucket_label}</span>
             </td>
           </tr></table>
         </td></tr>
@@ -213,7 +202,7 @@ function buildEmailHTML(ctx, draft, articles) {
         <tr><td style="padding:0 20px 16px;">
           <p style="margin:0;font-family:${FS};font-size:14px;color:#555;line-height:1.7;">${a.summary}</p>
         </td></tr>
-        <tr><td style="padding:0 20px 20px;border-top:1px solid #F0EBE3;">
+        <tr><td style="padding:0 20px 20px;border-top:1px solid #F2F2F2;">
           <table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
             <td valign="middle" style="padding-top:14px;">
               <span style="font-family:${FS};font-size:12px;color:#999;">${a.source || ''}${a.published_date ? ` · ${new Date(a.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}</span>
@@ -273,7 +262,7 @@ function buildEmailHTML(ctx, draft, articles) {
     </td></tr>
 
     <!-- Footer -->
-    <tr><td style="padding-top:32px;text-align:center;border-top:1px solid #D9D4CC;">
+    <tr><td style="padding-top:32px;text-align:center;border-top:1px solid #E5E5E5;">
       <p style="margin:0 0 6px;font-family:${FS};font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:2px;">The Sauce by SECRETSAUCE</p>
       <p style="margin:0;font-family:${F};font-size:12px;color:#bbb;font-style:italic;">get saucy with us · ${SEND_TIMES[ctx.geo]}</p>
     </td></tr>
