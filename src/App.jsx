@@ -177,14 +177,14 @@ function buildEmailHTML(ctx, draft, articles) {
       ? `<tr><td style="padding:0;line-height:0;font-size:0;">
            <a href="${a.url}" style="display:block;line-height:0;"><img src="${a.og_image}" width="560" alt="" style="display:block;width:100%;max-width:560px;height:auto;border-radius:10px 10px 0 0;background:#ddd;" /></a>
          </td></tr>`
-      : `<tr><td bgcolor="${BLACK}" style="height:${isFirst ? 220 : 160}px;border-radius:10px 10px 0 0;text-align:center;vertical-align:middle;padding:24px;">
-           <p style="margin:0;font-family:${FS};font-size:11px;font-weight:700;color:${RED};text-transform:uppercase;letter-spacing:3px;line-height:1.4;">${a.source || a.bucket_label}</p>
+      : `<tr><td bgcolor="#F0EFED" style="height:${isFirst ? 200 : 140}px;border-radius:10px 10px 0 0;text-align:center;vertical-align:middle;padding:24px;">
+           <p style="margin:0;font-family:${FS};font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:2px;">${a.source || a.bucket_label}</p>
          </td></tr>`
 
     const topPad = isFirst ? '20px 20px 0' : '16px 20px 0'
 
     return `
-    <tr><td style="padding:${isFirst ? '0' : '0 0 28px'};">
+    <tr><td style="padding:0 0 20px;">
       <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:10px;overflow:hidden;border:1px solid #EBEBEB;">
         ${imgBlock}
         <tr><td style="padding:${topPad};">
