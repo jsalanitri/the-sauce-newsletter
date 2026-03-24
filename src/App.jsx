@@ -73,8 +73,8 @@ function recencyBadge(d) {
 }
 
 // ─── API ──────────────────────────────────────────────────────────────────
-function callClaude(messages, system, useSearch = true) {
-  const body = { model: MODEL, max_tokens: 1000, system: system || '', messages }
+function callClaude(messages, system, useSearch = true, maxTokens = 1500) {
+  const body = { model: MODEL, max_tokens: maxTokens, system: system || '', messages }
   if (useSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }]
   return fetch(ANTHROPIC_API, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' }, body: JSON.stringify(body) }).then(r => r.json())
 }
@@ -144,10 +144,11 @@ async function fetchManualLink(url) {
 async function generateDraft(ctx, articles) {
   const roleNote = ctx.role === 'founder' ? 'Write with direct founder POV.' : 'Use third-party validation and cite sources.'
   const list = articles.map((a, i) => `${i + 1}. [${a.bucket_label}] ${a.title} (${a.published_date || 'recent'}): ${a.summary}`).join('\n')
-  const data = await callClaude([{ role: 'user', content: `Write a sharp AI/creative industry newsletter. Context: goal=${ctx.goal}, stage=${ctx.stage}, role=${ctx.role}. ${roleNote}. Tone: tactical, punchy. Today: ${TODAY_STR}.\n\nArticles:\n${list}\n\nReturn raw JSON only:\n{"subject_lines":["specific punchy","contrarian angle","direct utility"],"hook":"~75 words grabbing from a specific trend","core_insight":"~200 words — key pattern with named examples and data","playbook":["action 1","action 2","action 3","action 4"],"cta":"one sentence for ${ctx.goal}"}` }], 'Expert AI newsletter writer. Return only raw valid JSON, no markdown.', false)
+  const data = await callClaude([{ role: 'user', content: `Write a sharp AI/creative industry newsletter. Context: goal=${ctx.goal}, stage=${ctx.stage}, role=${ctx.role}. ${roleNote}. Tone: tactical, punchy. Today: ${TODAY_STR}.\n\nArticles:\n${list}\n\nReturn raw JSON only (no markdown, no code fences):\n{"subject_lines":["specific punchy","contrarian angle","direct utility"],"hook":"~50 words grabbing from a specific trend","core_insight":"~100 words — key pattern with named examples","playbook":["action 1","action 2","action 3"],"cta":"one sentence for ${ctx.goal}"}` }], 'Expert AI newsletter writer. Return only raw valid JSON, no markdown, no code fences.', false, 2000)
   const text = extractText(data.content)
+  if (data.error) throw new Error(data.error.message || JSON.stringify(data.error))
   const m = text.match(/\{[\s\S]*\}/)
-  if (!m) throw new Error('No JSON')
+  if (!m) throw new Error(`No JSON in response. Stop reason: ${data.stop_reason}. Raw: ${text.slice(0, 200)}`)
   return JSON.parse(m[0])
 }
 
@@ -433,7 +434,7 @@ export default function App() {
     try {
       const d = await generateDraft(ctx, approved)
       setDraft(d); setEd(JSON.parse(JSON.stringify(d))); setStep(STEP.DRAFT)
-    } catch { setError('Draft generation failed. Try again.'); setStep(STEP.REVIEW) }
+    } catch (e) { setError(`Draft generation failed: ${e.message}`); setStep(STEP.REVIEW) }
   }, [ctx, articles, selected, editedSum])
 
   const goPreview = useCallback(() => {
